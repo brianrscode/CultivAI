@@ -1,0 +1,28 @@
+{% extends "layouts/base.html" %}
+
+
+{% block title %}
+    CultivAI
+{% endblock title %}
+
+{% block content %}
+    <h1>Bienvenidos a CultivAI</h1>
+
+    {% if crop %}
+        <h2>Recomendación de cultivo: {{ crop}}</h2>
+    {% endif %}
+
+    {% comment %} 'N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall' {% endcomment %}
+    <form action="" method="post">
+        {% csrf_token %}
+        N: <input type="number" name="N" placeholder="N" step="any" required><br>
+        P: <input type="number" name="P" placeholder="P" step="any" required><br>
+        K: <input type="number" name="K" placeholder="K" step="any" required><br>
+        Temperatura: <input type="number" name="temperature" placeholder="Temperature" step="any" required><br>
+        Humedad: <input type="number" name="humidity" placeholder="Humidity" step="any" required><br>
+        pH: <input type="number" name="ph" placeholder="pH" step="any" required><br>
+        precipitación: <input type="number" name="rainfall" placeholder="Rainfall" step="any" required><br>
+        <button type="submit">Enviar</button>
+    </form>
+
+{% endblock content %}

@@ -1,12 +1,20 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block styles %}
+    {% endblock styles %}
+
     <title>{% block title %}{% endblock title %}</title>
-    {% comment %} <link rel="icon" type="image/x-icon" href="/images/favicon.ico"> {% endcomment %}
+    <link rel="icon" type="image/x-icon" href="{% static 'imgs/cultivai_icon.ico' %}">
 </head>
 <body>
+
+    {% include 'layouts/navbar.html' %}
+
     {% block content %}
     {% endblock content %}
 </body>

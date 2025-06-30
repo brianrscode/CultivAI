@@ -1,0 +1,28 @@
+{% extends "layouts/base.html" %}
+
+{% load static %}
+
+{% block title %}
+    Gráficos
+{% endblock title %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bento.css' %}">
+{% endblock styles %}
+
+{% block content %}
+    <br>
+    <div class="container">
+        <div class="parent">
+            <div class="div1">{{ fig_box_n | safe }}</div>
+            <div class="div2">{{ fig_box_p | safe }}</div>
+            <div class="div3">{{ fig_box_k | safe }}</div>
+            <div class="div4">{{ fig_box_temperature | safe }}</div>
+            <div class="div5">{{ fig_box_humidity | safe }}</div>
+            <div class="div6">{{ fig_box_ph | safe }}</div>
+            <div class="div8">{{ fig_box_rainfall | safe }}</div>
+            <div class="div8">{{ barra_importancia | safe }}</div>
+        </div>
+    </div>
+{% endblock content %}

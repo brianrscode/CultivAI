@@ -13,51 +13,49 @@ data = pd.read_csv('./static/data/Crop_recommendation.csv')
 
 
 def index_view(request):
-    crop = None
-
-    if request.method == 'POST':
-        form = CropForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            input_df = pd.DataFrame(
-                [
-                    [data['N'], data['P'], data['K'], data['temperature'], data['humidity'], data['ph'], data['rainfall']]
-                ],
-                columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
-            )
-
-            predicted_class = model.predict(input_df)
-            crop_name = label_encoder.inverse_transform(predicted_class)[0]
-
-            traducciones = {
-                'apple': 'Manzana',
-                'banana': 'Plátano',
-                'blackgram': 'Frijol negro',
-                'chickpea': 'Garbanzo',
-                'coffee': 'Café',
-                'coconut': 'Coco',
-                'cotton': 'Algodón',
-                'grapes': 'Uvas',
-                'jute': 'Yute',
-                'kidneybeans': 'Frijoles rojos',
-                'lentil': 'Lentejas',
-                'maize': 'Maíz',
-                'mango': 'Mango',
-                'mothbeans': 'Frijoles de polilla',
-                'mungbean': 'Frijol mungo',
-                'muskmelon': 'Melón',
-                'orange': 'Naranja',
-                'papaya': 'Papaya',
-                'pigeonpeas': 'Guisante de paloma',
-                'pomegranate': 'Granada',
-                'rice': 'Arroz',
-                'watermelon': 'Sandía'
-            }
-
-            crop = traducciones.get(crop_name, crop_name)
-    else:
+    if request.method != 'POST':
         form = CropForm()
+        return render(request, 'index.html', {'form': form})
 
+    form = CropForm(request.POST)
+    if not form.is_valid():
+        return render(request, 'index.html', {'form': form})
+
+    data = form.cleaned_data
+    input_df = pd.DataFrame(
+        [[data['N'], data['P'], data['K'], data['temperature'], data['humidity'], data['ph'], data['rainfall']]],
+        columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
+    )
+
+    predicted_class = model.predict(input_df)
+    crop_name = label_encoder.inverse_transform(predicted_class)[0]
+
+    traducciones = {
+        'apple': 'Manzana',
+        'banana': 'Plátano',
+        'blackgram': 'Frijol negro',
+        'chickpea': 'Garbanzo',
+        'coffee': 'Café',
+        'coconut': 'Coco',
+        'cotton': 'Algodón',
+        'grapes': 'Uvas',
+        'jute': 'Yute',
+        'kidneybeans': 'Frijoles rojos',
+        'lentil': 'Lentejas',
+        'maize': 'Maíz',
+        'mango': 'Mango',
+        'mothbeans': 'Frijoles de polilla',
+        'mungbean': 'Frijol mungo',
+        'muskmelon': 'Melón',
+        'orange': 'Naranja',
+        'papaya': 'Papaya',
+        'pigeonpeas': 'Guisante de paloma',
+        'pomegranate': 'Granada',
+        'rice': 'Arroz',
+        'watermelon': 'Sandía'
+    }
+
+    crop = traducciones.get(crop_name, crop_name)
     return render(request, 'index.html', {'form': form, 'crop': crop})
 
 

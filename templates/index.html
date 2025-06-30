@@ -10,55 +10,36 @@
     CultivAI
 {% endblock title %}
 
-{% block content %}
+{{% block content %}
 <div class="container min-vh-100 d-flex justify-content-center align-items-center">
     <div class="col-md-6">
         <h2 class="text-center mb-4 fw-bold">Recomendación de cultivos</h2>
 
         {% if crop %}
-            <div class="alert alert-success text-center fw-bold">Recomendación de cultivo: {{ crop }}</div>
+            <div class="alert alert-success text-center fw-bold">
+                Recomendación de cultivo: {{ crop }}
+            </div>
         {% endif %}
 
-        <form action="" method="post" class="p-4 shadow rounded bg-light">
+        <form method="post" class="p-4 shadow rounded bg-light">
             {% csrf_token %}
 
-            <div class="mb-3">
-                <label for="N" class="form-label">Nitrogen (N)</label>
-                <input type="number" name="N" step="any" class="form-control" placeholder="0-140" required>
-            </div>
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
 
-            <div class="mb-3">
-                <label for="P" class="form-label">Phosphorus (P)</label>
-                <input type="number" name="P" step="any" class="form-control" placeholder="5-145" required>
-            </div>
+                    {{ field }}
 
-            <div class="mb-3">
-                <label for="K" class="form-label">Potassium (K)</label>
-                <input type="number" name="K" step="any" class="form-control" placeholder="5-205" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="temperature" class="form-label">Temperature (°C)</label>
-                <input type="number" name="temperature" step="any" class="form-control" placeholder="8.83-43.7" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="humidity" class="form-label">Humidity (%)</label>
-                <input type="number" name="humidity" step="any" class="form-control" placeholder="14.3-100" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="ph" class="form-label">pH</label>
-                <input type="number" name="ph" step="any" class="form-control" placeholder="3.5-9.94" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="rainfall" class="form-label">Rainfall (mm)</label>
-                <input type="number" name="rainfall" step="any" class="form-control" placeholder="20.2-299" required>
-            </div>
+                    {% if field.errors %}
+                        <div class="text-danger small">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
 
             <button type="submit" class="btn btn-primary w-100 fw-bold">Enviar</button>
+
         </form>
     </div>
 </div>
 {% endblock content %}
+

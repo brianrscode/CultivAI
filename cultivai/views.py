@@ -1,8 +1,9 @@
 import pandas as pd
+import plotly.express as px
 from django.shortcuts import render
 from joblib import load
 
-import plotly.express as px
+from .forms import CropForm
 # from plotly.offline import plot  # Para generar gráficos interactivos en HTML
 
 
@@ -12,55 +13,52 @@ data = pd.read_csv('./static/data/Crop_recommendation.csv')
 
 
 def index_view(request):
+    crop = None
 
     if request.method == 'POST':
-        # 'N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'
-        n = float(request.POST.get('N'))
-        p = float(request.POST.get('P'))
-        k = float(request.POST.get('K'))
-        temperature = float(request.POST.get('temperature'))
-        humidity = float(request.POST.get('humidity'))
-        ph = float(request.POST.get('ph'))
-        rainfall = float(request.POST.get('rainfall'))
+        form = CropForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            input_df = pd.DataFrame(
+                [
+                    [data['N'], data['P'], data['K'], data['temperature'], data['humidity'], data['ph'], data['rainfall']]
+                ],
+                columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
+            )
 
-        # Crear un DataFrame con nombres de columnas para evitar el warning
-        input_df = pd.DataFrame([[
-            n, p, k, temperature, humidity, ph, rainfall
-        ]], columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'])
+            predicted_class = model.predict(input_df)
+            crop_name = label_encoder.inverse_transform(predicted_class)[0]
 
-        # Hacer la predicción
-        predicted_class = model.predict(input_df)
-        crop_name = label_encoder.inverse_transform(predicted_class)[0]
+            traducciones = {
+                'apple': 'Manzana',
+                'banana': 'Plátano',
+                'blackgram': 'Frijol negro',
+                'chickpea': 'Garbanzo',
+                'coffee': 'Café',
+                'coconut': 'Coco',
+                'cotton': 'Algodón',
+                'grapes': 'Uvas',
+                'jute': 'Yute',
+                'kidneybeans': 'Frijoles rojos',
+                'lentil': 'Lentejas',
+                'maize': 'Maíz',
+                'mango': 'Mango',
+                'mothbeans': 'Frijoles de polilla',
+                'mungbean': 'Frijol mungo',
+                'muskmelon': 'Melón',
+                'orange': 'Naranja',
+                'papaya': 'Papaya',
+                'pigeonpeas': 'Guisante de paloma',
+                'pomegranate': 'Granada',
+                'rice': 'Arroz',
+                'watermelon': 'Sandía'
+            }
 
-        traducciones = {
-            'apple': 'Manzana',
-            'banana': 'Plátano',
-            'blackgram': 'Frijol negro',
-            'chickpea': 'Garbanzo',
-            'coffee': 'Café',
-            'coconut': 'Coco',
-            'cotton': 'Algodón',
-            'grapes': 'Uvas',
-            'jute': 'Yute',
-            'kidneybeans': 'Frijoles rojos',
-            'lentil': 'Lentejas',
-            'maize': 'Maíz',
-            'mango': 'Mango',
-            'mothbeans': 'Frijoles de polilla',
-            'mungbean': 'Frijol mungo',
-            'muskmelon': 'Melón',
-            'orange': 'Naranja',
-            'papaya': 'Papaya',
-            'pigeonpeas': 'Guisante de paloma',
-            'pomegranate': 'Granada',
-            'rice': 'Arroz',
-            'watermelon': 'Sandía'
-        }
+            crop = traducciones.get(crop_name, crop_name)
+    else:
+        form = CropForm()
 
-
-        return render(request, 'index.html', {'crop': traducciones[crop_name]})
-
-    return render(request, 'index.html')
+    return render(request, 'index.html', {'form': form, 'crop': crop})
 
 
 def generar_grafico(y, title):

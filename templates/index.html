@@ -16,12 +16,12 @@
         <h2 class="text-center mb-4 fw-bold">Recomendación de cultivos</h2>
 
         {% if crop %}
-            <div class="alert alert-success text-center fw-bold">
+            <div class="alert alert-info alert-dismissible fade show text-center fw-bold">
                 Recomendación de cultivo: {{ crop }}
             </div>
         {% endif %}
 
-        <form method="post" class="p-4 shadow rounded bg-light">
+        <form method="post" class="p-4 shadow rounded bg-light" id="crop-form">
             {% csrf_token %}
 
             {% for field in form %}
@@ -37,9 +37,55 @@
             {% endfor %}
 
             <button type="submit" class="btn btn-primary w-100 fw-bold">Enviar</button>
-
         </form>
     </div>
 </div>
-{% endblock content %}
 
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        function actualizarDatosAmbiente() {
+            $.ajax({
+                url: '/api/obtener-ultimos-datos/',
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    if (data.temperature !== null && data.humidity !== null) {
+                        // Actualizar el campo de temperatura
+                        $('input[name="temperature"]').val(data.temperature);
+
+                        // Actualizar el campo de humedad
+                        $('input[name="humidity"]').val(data.humidity);
+
+                        // Mostrar notificación
+                        // const notification = $('<div>')
+                        //     .addClass('alert alert-info alert-dismissible fade show')
+                        //     .html(`
+                        //         <strong>Actualización automática:</strong>
+                        //         Temperatura: ${data.temperature}°C, Humedad: ${data.humidity}%
+                        //         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        //     `);
+                        // Insertar la notificación arriba del formulario
+                        // $('#crop-form').before(notification);
+                        // Eliminar la notificación después de 5 segundos
+                        // setTimeout(() => {
+                        //     notification.remove();
+                        // }, 5000);
+                    }
+                },
+                error: function(error) {
+                    console.error('Error al obtener los datos del ambiente:', error);
+                }
+            });
+        }
+
+        // Ejecutar la función cada 5 segundos (5000 milisegundos)
+        setInterval(actualizarDatosAmbiente, 5000);
+
+        // Ejecutar una vez al cargar la página
+        actualizarDatosAmbiente();
+    });
+</script>
+{% endblock %}
+{% endblock content %}

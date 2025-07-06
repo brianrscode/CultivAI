@@ -1,6 +1,9 @@
 import pandas as pd
 import plotly.express as px
 from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 from joblib import load
 
 from .forms import CropForm
@@ -96,3 +99,46 @@ def graphics_view(request):
         'barra_importancia': barra_importancia_html
     }
     return render(request, 'graficos.html', context)
+
+
+datos_ambiente_temporal = {}  # Diccionario para almacenar temporalmente los datos
+
+@csrf_exempt
+def receive_arduino_data(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            temperature = data.get('temperature')
+            humidity = data.get('humidity')
+
+            if temperature is not None and humidity is not None:
+                # Almacenar los datos temporalmente
+                datos_ambiente_temporal['temperature'] = temperature
+                datos_ambiente_temporal['humidity'] = humidity
+                return JsonResponse({
+                    'status': 'success',
+                    'temperature': temperature,
+                    'humidity': humidity
+                })
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Datos incompletos'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'JSON inválido'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+def obtener_ultimos_datos(request):
+    """
+    Endpoint para obtener los últimos datos de temperatura y humedad
+    """
+    if 'temperature' in datos_ambiente_temporal and 'humidity' in datos_ambiente_temporal:
+        return JsonResponse({
+            'temperature': datos_ambiente_temporal['temperature'],
+            'humidity': datos_ambiente_temporal['humidity']
+        })
+    else:
+        return JsonResponse({
+            'temperature': None,
+            'humidity': None
+        })

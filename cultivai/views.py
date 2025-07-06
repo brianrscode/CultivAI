@@ -128,6 +128,7 @@ def receive_arduino_data(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
+
 def obtener_ultimos_datos(request):
     """
     Endpoint para obtener los últimos datos de temperatura y humedad

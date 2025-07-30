@@ -4,14 +4,15 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from joblib import load
 
 from .forms import CropForm
-# from plotly.offline import plot  # Para generar gráficos interactivos en HTML
+from django.conf import settings
+from ..recommendations.services.ml_service import CropRecommendationService
 
 
-model = load("./model/crop_recommendation_model.joblib")
-label_encoder = load("./model/label_encoder.joblib")
+ml_service = CropRecommendationService(settings.MODEL_PATH, settings.ENCODER_PATH)
+model = ml_service.model
+label_encoder = ml_service.label_encoder
 data = pd.read_csv('./static/data/Crop_recommendation.csv')
 
 
@@ -24,42 +25,9 @@ def index_view(request):
     if not form.is_valid():
         return render(request, 'index.html', {'form': form})
 
-    data = form.cleaned_data
-    input_df = pd.DataFrame(
-        [[data['N'], data['P'], data['K'], data['temperature'], data['humidity'], data['ph'], data['rainfall']]],
-        columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
-    )
-
-    predicted_class = model.predict(input_df)
-    crop_name = label_encoder.inverse_transform(predicted_class)[0]
-
-    traducciones = {
-        'apple': 'Manzana',
-        'banana': 'Plátano',
-        'blackgram': 'Frijol negro',
-        'chickpea': 'Garbanzo',
-        'coffee': 'Café',
-        'coconut': 'Coco',
-        'cotton': 'Algodón',
-        'grapes': 'Uvas',
-        'jute': 'Yute',
-        'kidneybeans': 'Frijoles rojos',
-        'lentil': 'Lentejas',
-        'maize': 'Maíz',
-        'mango': 'Mango',
-        'mothbeans': 'Frijoles de polilla',
-        'mungbean': 'Frijol mungo',
-        'muskmelon': 'Melón',
-        'orange': 'Naranja',
-        'papaya': 'Papaya',
-        'pigeonpeas': 'Guisante de paloma',
-        'pomegranate': 'Granada',
-        'rice': 'Arroz',
-        'watermelon': 'Sandía'
-    }
-
-    crop = traducciones.get(crop_name, crop_name)
-    return render(request, 'index.html', {'form': form, 'crop': crop})
+    sensor_data = form.cleaned_data
+    result = ml_service.predict_crop(sensor_data)
+    return render(request, 'index.html', {'form': form, 'result': result})
 
 
 def generar_grafico(y, title):
@@ -143,3 +111,63 @@ def obtener_ultimos_datos(request):
             'temperature': None,
             'humidity': None
         })
+
+@csrf_exempt
+def crop_recommendation(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    try:
+        # Obtener datos del cuerpo de la petición
+        data = json.loads(request.body)
+
+        # Validar que todos los campos requeridos estén presentes
+        required_fields = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
+        if not all(field in data for field in required_fields):
+            return JsonResponse({'error': 'Faltan campos requeridos'}, status=400)
+
+        # Convertir los datos al formato esperado por el modelo
+        input_data = {
+            'N': float(data['N']),
+            'P': float(data['P']),
+            'K': float(data['K']),
+            'temperature': float(data['temperature']),
+            'humidity': float(data['humidity']),
+            'ph': float(data['ph']),
+            'rainfall': float(data['rainfall'])
+        }
+
+        # Obtener la predicción del modelo
+        prediction_result = ml_service.predict_crop(input_data)
+
+        # Formatear la respuesta
+        response_data = {
+            'success': True,
+            'predicted_crop': prediction_result.get('crop', ''),
+            'predicted_crop_spanish': prediction_result.get('crop_spanish', ''),
+            'confidence_percentage': prediction_result.get('confidence', 0) * 100,
+            'confidence_level': get_confidence_level(prediction_result.get('confidence', 0) * 100),
+            'model_version': '1.0.0',  # Reemplaza con la versión real de tu modelo
+            'input_data': input_data,
+            'top_recommendations': prediction_result.get('top_recommendations', [])
+        }
+
+        return JsonResponse(response_data)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Formato JSON inválido'}, status=400)
+    except ValueError as e:
+        return JsonResponse({'error': f'Error en los datos: {str(e)}'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Error interno del servidor: {str(e)}'}, status=500)
+
+def get_confidence_level(percentage):
+    """Devuelve el nivel de confianza basado en el porcentaje"""
+    if percentage >= 80:
+        return 'Muy alta'
+    elif percentage >= 60:
+        return 'Alta'
+    elif percentage >= 40:
+        return 'Media'
+    else:
+        return 'Baja'

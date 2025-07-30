@@ -42,16 +42,20 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     # Add any third-party apps here
+    'rest_framework',
+    'corsheaders',
 ]
 
 LOCAL_APPS = [
     # Add your local apps here
-    "cultivai",
+    "apps.cultivai",
+    "apps.recommendations",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -133,3 +137,6 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MODEL_PATH = os.path.join(BASE_DIR, 'static', 'models', 'crop_recommendation_model.joblib')
+ENCODER_PATH = os.path.join(BASE_DIR, 'static', 'models', 'label_encoder.joblib')

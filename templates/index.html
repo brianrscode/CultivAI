@@ -1,91 +1,320 @@
 {% extends "layouts/base.html" %}
 
-{% load static %}
-
-{% block styles %}
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-{% endblock styles %}
-
-{% block title %}
-    CultivAI
-{% endblock title %}
+{% block title %}CultivAI - Recomendación de Cultivos{% endblock %}
 
 {% block content %}
-<div class="container min-vh-100 d-flex justify-content-center align-items-center">
-    <div class="col-md-6">
-        <h2 class="text-center mb-4 fw-bold">Recomendación de cultivos</h2>
+<div class="min-vh-100 bg-light py-5">
+    <div class="container">
+        <h3 class="text-center mb-5 text-primary">Recomendación de cultivo</h3>
+        <div class="row g-4">
+            <!-- Formulario -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <form id="cropForm" class="needs-validation" novalidate>
+                            {% csrf_token %}
 
-        {% if crop %}
-            <div class="alert alert-info alert-dismissible fade show text-center fw-bold">
-                Recomendación de cultivo: {{ crop }}
-            </div>
-        {% endif %}
+                            <div class="mb-3">
+                                <label for="N" class="form-label">Nitrógeno (N)</label>
+                                <input type="number" step="0.1" class="form-control" id="N" required>
+                                <div class="invalid-feedback">Por favor ingrese un valor para Nitrógeno</div>
+                            </div>
 
-        <form method="post" class="p-4 shadow rounded bg-light" id="crop-form">
-            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="P" class="form-label">Fósforo (P)</label>
+                                <input type="number" step="0.1" class="form-control" id="P" required>
+                                <div class="invalid-feedback">Por favor ingrese un valor para Fósforo</div>
+                            </div>
 
-            {% for field in form %}
-                <div class="mb-3">
-                    <label class="form-label">{{ field.label }}</label>
+                            <div class="mb-3">
+                                <label for="K" class="form-label">Potasio (K)</label>
+                                <input type="number" step="0.1" class="form-control" id="K" required>
+                                <div class="invalid-feedback">Por favor ingrese un valor para Potasio</div>
+                            </div>
 
-                    {{ field }}
+                            <div class="mb-3">
+                                <label for="temperature" class="form-label">Temperatura (°C)</label>
+                                <input type="number" step="0.1" class="form-control" id="temperature" required>
+                                <div class="invalid-feedback">Por favor ingrese un valor para Temperatura</div>
+                            </div>
 
-                    {% if field.errors %}
-                        <div class="text-danger small">{{ field.errors }}</div>
-                    {% endif %}
+                            <div class="mb-3">
+                                <label for="humidity" class="form-label">Humedad (%)</label>
+                                <input type="number" step="0.1" class="form-control" id="humidity" required>
+                                <div class="invalid-feedback">Por favor ingrese un valor para Humedad</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="ph" class="form-label">pH</label>
+                                <input type="number" step="0.1" class="form-control" id="ph" required>
+                                <div class="invalid-feedback">Por favor ingrese un valor para pH</div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="rainfall" class="form-label">Lluvia (mm)</label>
+                                <input type="number" step="0.1" class="form-control" id="rainfall" required>
+                                <div class="invalid-feedback">Por favor ingrese un valor para Lluvia</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn">
+                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                <span class="button-text">Obtener Recomendación</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            {% endfor %}
+            </div>
 
-            <button type="submit" class="btn btn-primary w-100 fw-bold">Enviar</button>
-        </form>
+            <!-- Resultados -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div id="loadingIndicator" class="text-center d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Procesando tu solicitud...</p>
+                        </div>
+
+                        <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                            Ha ocurrido un error al procesar tu solicitud. Por favor, inténtalo de nuevo.
+                        </div>
+
+                        <div id="resultsContainer" class="d-none">
+                            <h3 class="h5 mb-3 text-primary">Resultado principal</h3>
+                            <div class="mb-4">
+                                <p class="mb-1"><strong>Cultivo recomendado:</strong> <span id="predictedCrop"></span></p>
+                                <p class="mb-1"><strong>Confianza:</strong> <span id="confidence"></span></p>
+                                <p class="mb-1"><small class="text-muted">Versión del modelo: <span id="modelVersion"></span></small></p>
+                            </div>
+
+                            <div class="mb-4">
+                                <h4 class="h6 mb-3">Distribución de confianza</h4>
+                                <div class="chart-container" style="position: relative; height: 300px;">
+                                    <canvas id="confidenceChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="h6 mb-3">Otras recomendaciones</h4>
+                                <div id="otherRecommendations" class="list-group"></div>
+                            </div>
+                        </div>
+
+                        <div id="initialMessage" class="text-center text-muted py-5">
+                            <i class="bi bi-graph-up" style="font-size: 2.5rem;"></i>
+                            <p class="mt-3 mb-0">Ingresa los parámetros del suelo para obtener recomendaciones de cultivo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        function actualizarDatosAmbiente() {
-            $.ajax({
-                url: '/api/obtener_ultimos_datos/',
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    if (data.temperature !== null && data.humidity !== null) {
-                        // Actualizar el campo de temperatura
-                        $('input[name="temperature"]').val(data.temperature);
+    // Configuración global de Bootstrap para validación de formularios
+    (function () {
+        'use strict'
 
-                        // Actualizar el campo de humedad
-                        $('input[name="humidity"]').val(data.humidity);
+        // Obtener todos los formularios a los que queremos aplicar estilos de validación de Bootstrap
+        var forms = document.querySelectorAll('.needs-validation')
 
-                        // Mostrar notificación
-                        // const notification = $('<div>')
-                        //     .addClass('alert alert-info alert-dismissible fade show')
-                        //     .html(`
-                        //         <strong>Actualización automática:</strong>
-                        //         Temperatura: ${data.temperature}°C, Humedad: ${data.humidity}%
-                        //         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        //     `);
-                        // Insertar la notificación arriba del formulario
-                        // $('#crop-form').before(notification);
-                        // Eliminar la notificación después de 5 segundos
-                        // setTimeout(() => {
-                        //     notification.remove();
-                        // }, 5000);
-                    }
-                },
-                error: function(error) {
-                    console.error('Error al obtener los datos del ambiente:', error);
+        // Bucle sobre ellos y evitar el envío
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault()
+                    submitForm()
                 }
-            });
+
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    // Función para mostrar u ocultar el estado de carga
+    function setLoading(isLoading) {
+        const submitBtn = document.getElementById('submitBtn')
+        const spinner = submitBtn.querySelector('.spinner-border')
+        const buttonText = submitBtn.querySelector('.button-text')
+        const loadingIndicator = document.getElementById('loadingIndicator')
+        const initialMessage = document.getElementById('initialMessage')
+        const resultsContainer = document.getElementById('resultsContainer')
+
+        if (isLoading) {
+            submitBtn.disabled = true
+            spinner.classList.remove('d-none')
+            buttonText.textContent = 'Procesando...'
+            loadingIndicator.classList.remove('d-none')
+            initialMessage.classList.add('d-none')
+            resultsContainer.classList.add('d-none')
+            document.getElementById('errorAlert').classList.add('d-none')
+        } else {
+            submitBtn.disabled = false
+            spinner.classList.add('d-none')
+            buttonText.textContent = 'Obtener Recomendación'
+            loadingIndicator.classList.add('d-none')
+        }
+    }
+
+    // Función para mostrar los resultados
+    function showResults(data) {
+        if (!data || !data.success) {
+            document.getElementById('errorAlert').classList.remove('d-none')
+            return
         }
 
-        // Ejecutar la función cada 5 segundos (5000 milisegundos)
-        setInterval(actualizarDatosAmbiente, 5000);
+        // Actualizar datos principales
+        document.getElementById('predictedCrop').textContent = `${data.predicted_crop_spanish} (${data.predicted_crop})`
+        document.getElementById('confidence').innerHTML = `${data.confidence_percentage}% <span class="text-muted">(${data.confidence_level})</span>`
+        document.getElementById('modelVersion').textContent = data.model_version || '1.0.0'
 
-        // Ejecutar una vez al cargar la página
-        actualizarDatosAmbiente();
-    });
+        // Actualizar otras recomendaciones
+        const otherRecsContainer = document.getElementById('otherRecommendations')
+        otherRecsContainer.innerHTML = ''
+
+        if (data.top_recommendations && data.top_recommendations.length > 0) {
+            data.top_recommendations.forEach((rec, index) => {
+                const recElement = document.createElement('div')
+                recElement.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center'
+                recElement.innerHTML = `
+                    <div>
+                        <h6 class="mb-0">${index + 1}. ${rec.crop_spanish}</h6>
+                        <small class="text-muted">${rec.crop}</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">${rec.percentage}%</span>
+                `
+                otherRecsContainer.appendChild(recElement)
+            })
+        }
+
+        // Mostrar contenedor de resultados
+        document.getElementById('resultsContainer').classList.remove('d-none')
+    }
+
+    // Función para crear/actualizar el gráfico
+    function updateChart(recommendations) {
+        const ctx = document.getElementById('confidenceChart').getContext('2d')
+
+        // Destruir el gráfico anterior si existe
+        if (window.cropChart) {
+            window.cropChart.destroy()
+        }
+
+        const labels = recommendations.map(r => r.crop_spanish)
+        const percentages = recommendations.map(r => r.percentage)
+        const backgroundColors = percentages.map(p => {
+            if (p >= 80) return 'rgba(75, 192, 192, 0.6)'
+            if (p >= 50) return 'rgba(255, 206, 86, 0.6)'
+            return 'rgba(255, 99, 132, 0.6)'
+        })
+
+        const borderColors = percentages.map(p => {
+            if (p >= 80) return 'rgba(75, 192, 192, 1)'
+            if (p >= 50) return 'rgba(255, 206, 86, 1)'
+            return 'rgba(255, 99, 132, 1)'
+        })
+
+        window.cropChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Confianza (%)',
+                    data: percentages,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1,
+                    barPercentage: 0.7,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Confianza: ${context.raw}%`
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Confianza (%)'
+                        },
+                        ticks: {
+                            stepSize: 20
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Cultivo'
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    // Función para enviar el formulario
+    async function submitForm() {
+        setLoading(true)
+
+        const formData = {
+            N: parseFloat(document.getElementById('N').value),
+            P: parseFloat(document.getElementById('P').value),
+            K: parseFloat(document.getElementById('K').value),
+            temperature: parseFloat(document.getElementById('temperature').value),
+            humidity: parseFloat(document.getElementById('humidity').value),
+            ph: parseFloat(document.getElementById('ph').value),
+            rainfall: parseFloat(document.getElementById('rainfall').value)
+        }
+
+        try {
+            const response = await fetch('{% url "crop-recommendation" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(formData)
+            })
+
+            if (!response.ok) {
+                throw new Error('Error en la petición')
+            }
+
+            const data = await response.json()
+            showResults(data)
+
+            // Actualizar el gráfico si hay recomendaciones
+            if (data.top_recommendations && data.top_recommendations.length > 0) {
+                updateChart(data.top_recommendations)
+            }
+
+        } catch (error) {
+            console.error('Error:', error)
+            document.getElementById('errorAlert').classList.remove('d-none')
+        } finally {
+            setLoading(false)
+        }
+    }
 </script>
 {% endblock %}
-{% endblock content %}

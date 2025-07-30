@@ -3,108 +3,106 @@
 {% block title %}CultivAI - Recomendación de Cultivos{% endblock %}
 
 {% block content %}
-<div class="min-vh-100 bg-light py-5">
-    <div class="container">
-        <h3 class="text-center mb-5 text-primary">Recomendación de cultivo</h3>
-        <div class="row g-4">
-            <!-- Formulario -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <form id="cropForm" class="needs-validation" novalidate>
-                            {% csrf_token %}
+<div class="container">
+    <h3 class="text-center mb-5 text-primary">Recomendación de cultivo</h3>
+    <div class="row g-4">
+        <!-- Formulario -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <form id="cropForm" class="needs-validation" novalidate>
+                        {% csrf_token %}
 
-                            <div class="mb-3">
-                                <label for="N" class="form-label">Nitrógeno (N)</label>
-                                <input type="number" step="0.1" class="form-control" id="N" required>
-                                <div class="invalid-feedback">Por favor ingrese un valor para Nitrógeno</div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="N" class="form-label">Nitrógeno (N)</label>
+                            <input type="number" step="0.1" class="form-control" id="N" placeholder="0-140" required>
+                            <div class="invalid-feedback">Por favor ingrese un valor para Nitrógeno</div>
+                        </div>
 
-                            <div class="mb-3">
-                                <label for="P" class="form-label">Fósforo (P)</label>
-                                <input type="number" step="0.1" class="form-control" id="P" required>
-                                <div class="invalid-feedback">Por favor ingrese un valor para Fósforo</div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="P" class="form-label">Fósforo (P)</label>
+                            <input type="number" step="0.1" class="form-control" id="P" placeholder="5-145" required>
+                            <div class="invalid-feedback">Por favor ingrese un valor para Fósforo</div>
+                        </div>
 
-                            <div class="mb-3">
-                                <label for="K" class="form-label">Potasio (K)</label>
-                                <input type="number" step="0.1" class="form-control" id="K" required>
-                                <div class="invalid-feedback">Por favor ingrese un valor para Potasio</div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="K" class="form-label">Potasio (K)</label>
+                            <input type="number" step="0.1" class="form-control" id="K" placeholder="5-205" required>
+                            <div class="invalid-feedback">Por favor ingrese un valor para Potasio</div>
+                        </div>
 
-                            <div class="mb-3">
-                                <label for="temperature" class="form-label">Temperatura (°C)</label>
-                                <input type="number" step="0.1" class="form-control" id="temperature" required>
-                                <div class="invalid-feedback">Por favor ingrese un valor para Temperatura</div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="temperature" class="form-label">Temperatura (°C)</label>
+                            <input type="number" step="0.1" class="form-control" id="temperature" placeholder="8.83-43.7" required>
+                            <div class="invalid-feedback">Por favor ingrese un valor para Temperatura</div>
+                        </div>
 
-                            <div class="mb-3">
-                                <label for="humidity" class="form-label">Humedad (%)</label>
-                                <input type="number" step="0.1" class="form-control" id="humidity" required>
-                                <div class="invalid-feedback">Por favor ingrese un valor para Humedad</div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="humidity" class="form-label">Humedad (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="humidity" placeholder="14.3-100" required>
+                            <div class="invalid-feedback">Por favor ingrese un valor para Humedad</div>
+                        </div>
 
-                            <div class="mb-3">
-                                <label for="ph" class="form-label">pH</label>
-                                <input type="number" step="0.1" class="form-control" id="ph" required>
-                                <div class="invalid-feedback">Por favor ingrese un valor para pH</div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="ph" class="form-label">pH</label>
+                            <input type="number" step="0.1" class="form-control" id="ph" placeholder="3.5-9.94" required>
+                            <div class="invalid-feedback">Por favor ingrese un valor para pH</div>
+                        </div>
 
-                            <div class="mb-4">
-                                <label for="rainfall" class="form-label">Lluvia (mm)</label>
-                                <input type="number" step="0.1" class="form-control" id="rainfall" required>
-                                <div class="invalid-feedback">Por favor ingrese un valor para Lluvia</div>
-                            </div>
+                        <div class="mb-4">
+                            <label for="rainfall" class="form-label">Lluvia (mm)</label>
+                            <input type="number" step="0.1" class="form-control" id="rainfall" placeholder="20.2-299" required>
+                            <div class="invalid-feedback">Por favor ingrese un valor para Lluvia</div>
+                        </div>
 
-                            <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn">
-                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                                <span class="button-text">Obtener Recomendación</span>
-                            </button>
-                        </form>
-                    </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span class="button-text">Obtener Recomendación</span>
+                        </button>
+                    </form>
                 </div>
             </div>
+        </div>
 
-            <!-- Resultados -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <div id="loadingIndicator" class="text-center d-none">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
-                            <p class="mt-2">Procesando tu solicitud...</p>
+        <!-- Resultados -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div id="loadingIndicator" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Procesando tu solicitud...</p>
+                    </div>
+
+                    <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+                        Ha ocurrido un error al procesar tu solicitud. Por favor, inténtalo de nuevo.
+                    </div>
+
+                    <div id="resultsContainer" class="d-none">
+                        <h3 class="h5 mb-3 text-primary">Resultado principal</h3>
+                        <div class="mb-4">
+                            <p class="mb-1"><strong>Cultivo recomendado: <span id="predictedCrop" class="text-primary"></span></strong></p>
+                            <p class="mb-1"><strong>Confianza: <span id="confidence" class="text-primary"></span></strong></p>
+                            <p class="mb-1"><small class="text-muted">Versión del modelo: <span id="modelVersion"></span></small></p>
                         </div>
 
-                        <div id="errorAlert" class="alert alert-danger d-none" role="alert">
-                            Ha ocurrido un error al procesar tu solicitud. Por favor, inténtalo de nuevo.
-                        </div>
-
-                        <div id="resultsContainer" class="d-none">
-                            <h3 class="h5 mb-3 text-primary">Resultado principal</h3>
-                            <div class="mb-4">
-                                <p class="mb-1"><strong>Cultivo recomendado:</strong> <span id="predictedCrop"></span></p>
-                                <p class="mb-1"><strong>Confianza:</strong> <span id="confidence"></span></p>
-                                <p class="mb-1"><small class="text-muted">Versión del modelo: <span id="modelVersion"></span></small></p>
-                            </div>
-
-                            <div class="mb-4">
-                                <h4 class="h6 mb-3">Distribución de confianza</h4>
-                                <div class="chart-container" style="position: relative; height: 300px;">
-                                    <canvas id="confidenceChart"></canvas>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 class="h6 mb-3">Otras recomendaciones</h4>
-                                <div id="otherRecommendations" class="list-group"></div>
+                        <div class="mb-4">
+                            <h4 class="h6 mb-3">Distribución de confianza</h4>
+                            <div class="chart-container" style="position: relative; height: 300px;">
+                                <canvas id="confidenceChart"></canvas>
                             </div>
                         </div>
 
-                        <div id="initialMessage" class="text-center text-muted py-5">
-                            <i class="bi bi-graph-up" style="font-size: 2.5rem;"></i>
-                            <p class="mt-3 mb-0">Ingresa los parámetros del suelo para obtener recomendaciones de cultivo</p>
+                        <div>
+                            <h4 class="h6 mb-3">Otras recomendaciones</h4>
+                            <div id="otherRecommendations" class="list-group"></div>
                         </div>
+                    </div>
+
+                    <div id="initialMessage" class="text-center text-muted py-5">
+                        <i class="bi bi-graph-up" style="font-size: 2.5rem;"></i>
+                        <p class="mt-3 mb-0">Ingresa los parámetros del suelo para obtener recomendaciones de cultivo</p>
                     </div>
                 </div>
             </div>

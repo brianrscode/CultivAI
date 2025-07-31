@@ -50,6 +50,18 @@ python manage.py runserver
 - El modelo procesará los datos y devolverá el cultivo más adecuado.
 - Visualiza el resultado directamente en la página web.
 
+## 📷 ScreenShots
+<table>
+    <tr>
+        <td>
+            <img src="imgs/1.png" width=800>
+        </td>
+        <td>
+            <img src="imgs/2.png" width=800>
+        </td>
+    </tr>
+</table>
+
 ## 📊 Dataset
 
 Fuente: [Kaggle - Crop Recommendation Dataset](https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset/data)

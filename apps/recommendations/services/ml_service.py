@@ -1,16 +1,22 @@
+import logging
 import os
 import time
-import logging
-import pandas as pd
+from typing import Dict, List
+
 import numpy as np
+import pandas as pd
 from joblib import load
-from typing import Dict, List, Tuple, Optional
 
 logger = logging.getLogger('predictions')
 
 class CropRecommendationService:
     """
     Servicio de recomendaciones de cultivos basado en Machine Learning
+
+
+    Args:
+        model_path (str): Ruta al modelo ML entrenado
+        encoder_path (str): Ruta al encoder de etiquetas
     """
 
     def __init__(self, model_path: str, encoder_path: str):
@@ -23,7 +29,7 @@ class CropRecommendationService:
         self.model_path = model_path
         self.encoder_path = encoder_path
 
-        # Diccionario de traducciones (del proyecto original)
+        # Diccionario de traducciones
         self.translations = {
             'apple': 'Manzana',
             'banana': 'Plátano',
@@ -55,7 +61,7 @@ class CropRecommendationService:
     def _load_model(self):
         """Carga el modelo y el label encoder desde archivos joblib"""
         try:
-            # Usar los paths proporcionados o los de la instancia
+            # Usar los paths proporcionados
             model_path = self.model_path
             encoder_path = self.encoder_path
 
@@ -85,12 +91,12 @@ class CropRecommendationService:
         """Verifica si el modelo está disponible para predicciones"""
         return self.model_loaded and self.model is not None and self.label_encoder is not None
 
-    def predict_crop(self, sensor_data: Dict) -> Dict:
+    def predict_crop(self, data_received: Dict) -> Dict:
         """
         Realiza predicción de cultivo basada en datos de sensores
 
         Args:
-            sensor_data (dict): Datos de sensores con keys: N, P, K, temperature, humidity, ph, rainfall
+            data_received (dict): Datos con keys: N, P, K, temperature, humidity, ph, rainfall
 
         Returns:
             dict: Resultado de la predicción con confianza y recomendaciones
@@ -107,7 +113,7 @@ class CropRecommendationService:
             start_time = time.time()
 
             # Validar datos de entrada
-            validation_result = self._validate_input_data(sensor_data)
+            validation_result = self._validate_input_data(data_received)
             if not validation_result['valid']:
                 return {
                     'success': False,
@@ -116,7 +122,7 @@ class CropRecommendationService:
                 }
 
             # Preparar datos para el modelo
-            input_df = self._prepare_model_input(sensor_data)
+            input_df = self._prepare_model_input(data_received)
 
             # Realizar predicción
             prediction = self.model.predict(input_df)[0]
@@ -144,7 +150,7 @@ class CropRecommendationService:
                 'all_probabilities': self._get_all_probabilities(probabilities),
                 'model_version': self.model_version,
                 'prediction_time_ms': prediction_time,
-                'input_data': sensor_data
+                'input_data': data_received
             }
 
             logger.info(f"Predicción exitosa: {crop_spanish} ({confidence:.2%})")
@@ -192,17 +198,17 @@ class CropRecommendationService:
 
         return {'valid': len(errors) == 0, 'errors': errors}
 
-    def _prepare_model_input(self, sensor_data: Dict) -> pd.DataFrame:
+    def _prepare_model_input(self, data_received: Dict) -> pd.DataFrame:
         """Prepara los datos en el formato esperado por el modelo"""
 
         input_data = [
-            sensor_data['N'],
-            sensor_data['P'],
-            sensor_data['K'],
-            sensor_data['temperature'],
-            sensor_data['humidity'],
-            sensor_data['ph'],
-            sensor_data['rainfall']
+            data_received['N'],
+            data_received['P'],
+            data_received['K'],
+            data_received['temperature'],
+            data_received['humidity'],
+            data_received['ph'],
+            data_received['rainfall']
         ]
 
         columns = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
@@ -252,7 +258,7 @@ class CropRecommendationService:
         else:
             return 'baja'
 
-    def get_crop_recommendations_text(self, crop_name: str, sensor_data: Dict) -> Dict:
+    def get_crop_recommendations_text(self, crop_name: str, data_recived: Dict) -> Dict:
         """
         Genera recomendaciones textuales para el cultivo predicho
 
@@ -304,9 +310,9 @@ class CropRecommendationService:
             recommendations.update(crop_info[crop_name])
 
         # Advertencias basadas en condiciones actuales
-        temp = sensor_data.get('temperature', 25)
-        humidity = sensor_data.get('humidity', 50)
-        ph = sensor_data.get('ph', 7)
+        temp = data_recived.get('temperature', 25)
+        humidity = data_recived.get('humidity', 50)
+        ph = data_recived.get('ph', 7)
 
         warnings = []
 

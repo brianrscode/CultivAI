@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 from .forms import CropForm
+
 from django.conf import settings
 from ..recommendations.services.ml_service import CropRecommendationService
 
@@ -25,9 +26,7 @@ def index_view(request):
     if not form.is_valid():
         return render(request, 'index.html', {'form': form})
 
-    sensor_data = form.cleaned_data
-    result = ml_service.predict_crop(sensor_data)
-    return render(request, 'index.html', {'form': form, 'result': result})
+    return render(request, 'index.html', {'form': form})
 
 
 def generar_grafico(y, title):

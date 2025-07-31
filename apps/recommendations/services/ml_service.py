@@ -99,7 +99,7 @@ class CropRecommendationService:
         if not self.is_model_available():
             return {
                 'success': False,
-                'error': 'Modelo ML no disponible',
+                'errors': 'Modelo ML no disponible',
                 'predicted_crop': None
             }
 
@@ -111,7 +111,7 @@ class CropRecommendationService:
             if not validation_result['valid']:
                 return {
                     'success': False,
-                    'error': f"Datos inválidos: {validation_result['errors']}",
+                    'errors': f"Datos inválidos: {validation_result['errors']}",
                     'predicted_crop': None
                 }
 
@@ -154,7 +154,7 @@ class CropRecommendationService:
             logger.error(f"Error en predicción: {e}")
             return {
                 'success': False,
-                'error': f'Error interno en predicción: {str(e)}',
+                'errors': f'Error interno en predicción: {str(e)}',
                 'predicted_crop': None
             }
 

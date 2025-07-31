@@ -15,43 +15,43 @@
 
                         <div class="mb-3">
                             <label for="N" class="form-label">Nitrógeno (N)</label>
-                            <input type="number" step="0.1" class="form-control" id="N" placeholder="0-140" required>
+                            <input type="number" step="any" class="form-control" id="N" placeholder="0-140" required>
                             <div class="invalid-feedback">Por favor ingrese un valor para Nitrógeno</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="P" class="form-label">Fósforo (P)</label>
-                            <input type="number" step="0.1" class="form-control" id="P" placeholder="5-145" required>
+                            <input type="number" step="any" class="form-control" id="P" placeholder="5-145" required>
                             <div class="invalid-feedback">Por favor ingrese un valor para Fósforo</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="K" class="form-label">Potasio (K)</label>
-                            <input type="number" step="0.1" class="form-control" id="K" placeholder="5-205" required>
+                            <input type="number" step="any" class="form-control" id="K" placeholder="5-205" required>
                             <div class="invalid-feedback">Por favor ingrese un valor para Potasio</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="temperature" class="form-label">Temperatura (°C)</label>
-                            <input type="number" step="0.1" class="form-control" id="temperature" placeholder="8.83-43.7" required>
+                            <input type="number" step="any" class="form-control" id="temperature" placeholder="8.83-43.7" required>
                             <div class="invalid-feedback">Por favor ingrese un valor para Temperatura</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="humidity" class="form-label">Humedad (%)</label>
-                            <input type="number" step="0.1" class="form-control" id="humidity" placeholder="14.3-100" required>
+                            <input type="number" step="any" class="form-control" id="humidity" placeholder="14.3-100" required>
                             <div class="invalid-feedback">Por favor ingrese un valor para Humedad</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="ph" class="form-label">pH</label>
-                            <input type="number" step="0.1" class="form-control" id="ph" placeholder="3.5-9.94" required>
+                            <input type="number" step="any" class="form-control" id="ph" placeholder="3.5-9.94" required>
                             <div class="invalid-feedback">Por favor ingrese un valor para pH</div>
                         </div>
 
                         <div class="mb-4">
                             <label for="rainfall" class="form-label">Lluvia (mm)</label>
-                            <input type="number" step="0.1" class="form-control" id="rainfall" placeholder="20.2-299" required>
+                            <input type="number" step="any" class="form-control" id="rainfall" placeholder="20.2-299" required>
                             <div class="invalid-feedback">Por favor ingrese un valor para Lluvia</div>
                         </div>
 
@@ -163,11 +163,6 @@
 
     // Función para mostrar los resultados
     function showResults(data) {
-        if (!data || !data.success) {
-            document.getElementById('errorAlert').classList.remove('d-none')
-            return
-        }
-
         // Actualizar datos principales
         document.getElementById('predictedCrop').textContent = `${data.predicted_crop_spanish} (${data.predicted_crop})`
         document.getElementById('confidence').innerHTML = `${data.confidence_percentage}% <span class="text-muted">(${data.confidence_level})</span>`
@@ -295,11 +290,34 @@
                 body: JSON.stringify(formData)
             })
 
+            const data = await response.json()
+
             if (!response.ok) {
-                throw new Error('Error en la petición')
+                const errorAlert = document.getElementById('errorAlert');
+                errorAlert.classList.remove('d-none');
+                if (data && data.errors) {
+                    // Si es un array, únelos en una sola cadena
+                    if (Array.isArray(data.errors)) {
+                        errorAlert.textContent = data.errors.join('\n');
+                    }
+                    // Si es un objeto (por ejemplo, errores de DRF serializer), muestra cada campo y sus errores
+                    else if (typeof data.errors === 'object') {
+                        errorAlert.textContent = Object.entries(data.errors)
+                            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                            .join('\n');
+                    }
+                    // Si es un string, lo muestra directamente
+                    else {
+                        errorAlert.textContent = data.errors;
+                    }
+                } else if (data && data.message) {
+                    errorAlert.textContent = data.message;
+                } else {
+                    errorAlert.textContent = 'Ha ocurrido un error al procesar tu solicitud. Por favor, inténtalo de nuevo.';
+                }
+                throw new Error('Error al procesar la solicitud')
             }
 
-            const data = await response.json()
             showResults(data)
 
             // Actualizar el gráfico si hay recomendaciones
